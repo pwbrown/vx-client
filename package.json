@@ -6,6 +6,14 @@
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1"
   },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/pwbrown/vx-client.git"
+  },
+  "bugs": {
+    "url": "https://github.com/pwbrown/vx-client/issues"
+  },
+  "homepage": "https://github.com/pwbrown/vx-client#readme",
   "author": "Philip Brown",
   "license": "GNU GPL"
 }
