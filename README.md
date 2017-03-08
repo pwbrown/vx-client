@@ -211,7 +211,6 @@ vx.login({sessionId: "sOm3_s3ss1one_Id"}, function(err, loggedIn){
 
 ####'studioList'
 * **Read-only** list of available studios
-* **Requires selected studio**
 
 ```Javascript
 vx.studioList(function(err, data){

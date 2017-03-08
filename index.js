@@ -247,11 +247,6 @@ vxClient.prototype.consoleLog = function(level, message){
 //OBJECT="cc"--\/--\/--\/--\/--\/--\/--\/--\/--\/--\/--\/--\/--\/--START
 vxClient.prototype.studioList = function(cb){  //LOGIN REQUIRED
 	if(typeof cb !== 'function') return this.consoleLog(1, "Callback is required for \"studioList\"");
-	if(!this.activeStudio()){
-		this.consoleLog(1, "Must select studio before using this method");
-		cb("Must select studio before using this method", null);
-		return;
-	}
 	this.request({
 		object: "cc",
 		properties: ['studio_list'],
