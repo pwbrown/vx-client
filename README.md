@@ -57,7 +57,7 @@ vx.on('event_name', function(error, data){
 //Example Callback Data Object
 {
 	from: "User's Name",
-	message: "Message from user
+	message: "Message from user"
 }
 ```
 
