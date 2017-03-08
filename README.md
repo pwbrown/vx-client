@@ -6,7 +6,7 @@ vx-client is a node.js api wrapper for the Telos VX phone system SIP server. Sen
 ###*Notes on environment*
 * Tested on Telos VX Prime system
 
-##Installation (*Not Published Yet*)
+##Installation
 	npm install vx-client --save
 	--OR--
 	yarn add vx-client
