@@ -13,8 +13,8 @@ var vxClient = module.exports = function(configuration){
 	//Listener register
 	this.listenerRegister = {};
 	//Debug console statements
-	if(configuration && configuration.debug) this.debug = true;
-	else this.debug = false;
+	if(configuration && configuration.debug) this.debug = configuration.debug;
+	else this.debug = 0;
 	this.connectCallback = null;
 	//Holds current state of the system
 	this.state = {};
@@ -27,8 +27,7 @@ var vxClient = module.exports = function(configuration){
 		}
 	}.bind(this));
 	this.socket.on('data', function(data){
-		if(this.debug)
-			console.log("INCOMING: "+data);
+		this.consoleLog(2, "INCOMING: "+data);
 		this.onData(data);
 	}.bind(this));
 }
@@ -38,13 +37,13 @@ vxClient.prototype.connect = function(options, cb){
 	this.connectCallback = cb;
 	if(typeof options.host !== 'undefined' && typeof options.port !== 'undefined'){
 		this.socket.connect(options.port, options.host, function(){
-			if(this.debug) console.log("SOCKET: Connection Established");
+			this.consoleLog(2, "SOCKET: Connection Established");
 			this.connected = true;
 			cb(null, true);
 			this.connectCallback = null;
 		}.bind(this));
 	}else{
-		if(this.debug) console.log("ERROR: connect method requires \"host\" and \"port\" options");
+		this.consoleLog(1,"ERROR: connect method requires \"host\" and \"port\" options");
 		cb("ERROR: connect method requires \"host\" and \"port\" options", false);
 	}
 }
@@ -54,12 +53,12 @@ vxClient.prototype.connect = function(options, cb){
 vxClient.prototype.request = function(options){
 	if(!this.connected){
 		if(options.cb) options.cb("ERROR: request cannot be made until TCP connection has been established", null);
-		if(this.debug) console.log("ERROR: request cannot be made until TCP connection has been established");
+		this.consoleLog(1,"ERROR: request cannot be made until TCP connection has been established");
 		return;
 	}
 	if(!this.loggedIn && !options.loginNotRequired){
 		if(options.cb) options.cb("ERROR: this method requires the client to be logged into the tellos vx system", null);
-		if(this.debug) console.log("ERROR: this method requires the client to be logged into the tellos vx system");
+		this.consoleLog("ERROR: this method requires the client to be logged into the tellos vx system");
 		return;
 	}
 	var data = helper.lwcpGenerate(JSON.parse(JSON.stringify(options)));
@@ -76,8 +75,7 @@ vxClient.prototype.request = function(options){
 	}
 	this.socket.write(data + "\n");
 	//debugger;
-	if(this.debug)
-		console.log("OUTGOING: " + data);
+	this.consoleLog(2, "OUTGOING: " + data);
 	return;
 }
 
@@ -98,9 +96,7 @@ vxClient.prototype.onData = function(data){
 			if(typeof this.cbRegister.login !== 'undefined' && typeof this.cbRegister.login.cb == 'function')
 				this.cbRegister.login.cb(null, modifiedResults.loggedIn);
 		}
-	}else if(lwcp.operation == 'update'){
-		console.log("Update received");
-	}else if(lwcp.operation == 'event'){
+	}else if(lwcp.operation == 'event' || lwcp.operation == 'update'){
 		this.handleEvent(lwcp);
 	}
 }
@@ -199,8 +195,7 @@ vxClient.prototype.emit = function(name, options){
 	if(typeof this.listenerRegister[name] == 'function'){
 		this.listenerRegister[name](options.err || null, options.data || null);
 	}else{
-		if(this.debug)
-			console.log("Missing event listener: \""+name+"\"");
+		this.consoleLog(1, "Missing event listener: \""+name+"\"");
 	}
 }
 
@@ -208,8 +203,41 @@ vxClient.prototype.on = function(name, cb){
 	if(typeof name !== 'undefined' && typeof cb == 'function'){
 		this.listenerRegister[name] = cb;
 	}else{
-		if(this.debug)
-			console.log("ERROR adding listener: expected two arguments (listener_name, callback)");
+		this.consoleLog(1, "ERROR adding listener: expected two arguments (listener_name, callback)");
+	}
+}
+
+vxClient.prototype.activeStudio = function(){
+	if(typeof this.state.currentStudio == 'undefined' || typeof this.state.currentStudio.id == 'undefined')
+		return false;
+	else
+		return true;
+}
+
+vxClient.prototype.checkLineState = function(lineNumber, isLineState, shouldBe){
+	if(typeof lineNumber !== 'undefined' && this.state.lines !== 'undefined' && this.state.lines[lineNumber.toString()] !== 'undefined'){
+		if(typeof isLineState == 'boolean' && isLineState && this.state.lines[lineNumber.toString()].lineState !== 'undefined'){
+			if(typeof shouldBe == 'string' && this.state.lines[lineNumber.toString()].lineState == shouldBe.toUpperCase())
+				return true;
+			else
+				return false;
+		}else if(typeof isLineState == 'boolean' && !isLineState && this.state.lines[lineNumber.toString()].callState !== 'undefined'){
+			if(typeof shouldBe == 'string' && this.state.lines[lineNumber.toString()].callState == shouldBe.toUpperCase())
+				return true;
+			else
+				return false;
+		}else{
+			return false;
+		}
+	}else{
+		return false;
+	}
+}
+
+vxClient.prototype.consoleLog = function(level, message){
+	if(typeof level !== 'number') level = 1;
+	if(this.debug >= level && this.debug > 0){
+		console.log(message);
 	}
 }
 //MAIN INTERNAL METHODS--/\--/\--/\--/\--/\--/\--/\--/\--/\--/\--/\--/\--/\--END
@@ -218,6 +246,12 @@ vxClient.prototype.on = function(name, cb){
 
 //OBJECT="cc"--\/--\/--\/--\/--\/--\/--\/--\/--\/--\/--\/--\/--\/--START
 vxClient.prototype.studioList = function(cb){  //LOGIN REQUIRED
+	if(typeof cb !== 'function') return this.consoleLog(1, "Callback is required for \"studioList\"");
+	if(!this.activeStudio()){
+		this.consoleLog(1, "Must select studio before using this method");
+		cb("Must select studio before using this method", null);
+		return;
+	}
 	this.request({
 		object: "cc",
 		properties: ['studio_list'],
@@ -231,6 +265,7 @@ vxClient.prototype.studioList = function(cb){  //LOGIN REQUIRED
 }
 
 vxClient.prototype.date = function(cb){  //LOGIN REQUIRED
+	if(typeof cb !== 'function') return this.consoleLog(1, "Callback is required for \"date\"");
 	this.request({
 		object: "cc",
 		properties: ['date'],
@@ -244,6 +279,7 @@ vxClient.prototype.date = function(cb){  //LOGIN REQUIRED
 }
 
 vxClient.prototype.getServer = function(cb){
+	if(typeof cb !== 'function') return this.consoleLog(1, "Callback is required for \"getServer\"");
 	this.request({
 		object: "cc",
 		properties: ["server_id","server_version","server_caps","lwcp_version"],
@@ -273,6 +309,7 @@ vxClient.prototype.setMode = function(mode){  //LOGIN REQUIRED
 }
 
 vxClient.prototype.login = function(options, cb){
+	if(typeof cb !== 'function') return this.consoleLog(1, "Callback is required for \"login\"");
 	if(typeof options.username !== 'string' || typeof options.username !== 'string'){
 		if(typeof options.sessionId !== 'string'){
 			return cb("ERROR: login requires either a username password option combination or a sessionId option", null);
@@ -297,6 +334,7 @@ vxClient.prototype.login = function(options, cb){
 }
 
 vxClient.prototype.ping = function(cb){
+	if(typeof cb !== 'function') return this.consoleLog(1, "Callback is required for \"ping\"");
 	this.request({
 		operation: "ping",
 		object: "cc",
@@ -309,6 +347,12 @@ vxClient.prototype.ping = function(cb){
 
 //OBJECT="studio"--\/--\/--\/--\/--\/--\/--\/--\/--\/--\/--\/--\/--\/--START
 vxClient.prototype.getStudio = function(cb){
+	if(typeof cb !== 'function') return this.consoleLog(1, "Callback is required for \"getStudio\"");
+	if(!this.activeStudio()){
+		this.consoleLog(1, "Must select studio before using this method");
+		cb("Must select studio before using this method", null);
+		return;
+	}
 	this.request({
 		object: "studio",
 		properties: ["id", "name", "show_id", "show_name", "num_lines", "hybrid_list", "num_hybrids", "num_hyb_fixed", "next", "pnext", "busy_all", "mute", "show_locked", "auto_answer"],
@@ -335,6 +379,12 @@ vxClient.prototype.getStudio = function(cb){
 }
 
 vxClient.prototype.showList = function(cb){
+	if(typeof cb !== 'function') return this.consoleLog(1, "Callback is required for \"showList\"");
+	if(!this.activeStudio()){
+		this.consoleLog(1, "Must select studio before using this method");
+		cb("Must select studio before using this method", null);
+		return;
+	}
 	this.request({
 		object: "studio",
 		properties: ["show_list"],
@@ -348,6 +398,12 @@ vxClient.prototype.showList = function(cb){
 }
 
 vxClient.prototype.lineList = function(cb){
+	if(typeof cb !== 'function') return this.consoleLog(1, "Callback is required for \"lineList\"");
+	if(!this.activeStudio()){
+		this.consoleLog(1, "Must select studio before using this method");
+		cb("Must select studio before using this method", null);
+		return;
+	}
 	this.request({
 		object: "studio",
 		properties: ["line_list"],
@@ -376,6 +432,10 @@ vxClient.prototype.selectStudio = function(id){
 }
 
 vxClient.prototype.selectShow = function(id){
+	if(!this.activeStudio()){
+		this.consoleLog(1, "Must select studio before using this method");
+		return;
+	}
 	this.request({
 		operation: "select_show",
 		object: "studio",
@@ -388,6 +448,11 @@ vxClient.prototype.selectShow = function(id){
 }
 
 vxClient.prototype.im = function(from, message){
+	if(typeof from !== 'string' || typeof message !== 'string') return this.consoleLog(1, "Missing required from or message string for \"im\" method");
+	if(!this.activeStudio()){
+		this.consoleLog(1, "Must select studio before using this method");
+		return;
+	}
 	this.request({
 		operation: "im",
 		object: "studio",
@@ -401,6 +466,11 @@ vxClient.prototype.im = function(from, message){
 }
 
 vxClient.prototype.setBusyAll = function(busyAll){
+	if(typeof busyAll !== 'boolean') busyAll = true;
+	if(!this.activeStudio()){
+		this.consoleLog(1, "Must select studio before using this method");
+		return;
+	}
 	this.request({
 		operation: "busy_all",
 		object: "studio",
@@ -414,6 +484,11 @@ vxClient.prototype.setBusyAll = function(busyAll){
 }
 
 vxClient.prototype.dropHybrid = function(hybrid){
+	if(typeof hybrid == 'undefined') return this.consoleLog(1, "Hybrid line id is required for \"dropHybrid\" method");
+	if(!this.activeStudio()){
+		this.consoleLog(1, "Must select studio before using this method");
+		return;
+	}
 	this.request({
 		operation: 'drop',
 		object: 'studio',
@@ -427,6 +502,11 @@ vxClient.prototype.dropHybrid = function(hybrid){
 }
 
 vxClient.prototype.holdHybrid = function(hybrid){
+	if(typeof hybrid == 'undefined') return this.consoleLog(1, "Hybrid line id is required for \"holdHybrid\" method");
+	if(!this.activeStudio()){
+		this.consoleLog(1, "Must select studio before using this method");
+		return;
+	}
 	this.request({
 		operation: 'hold',
 		object: 'studio',
@@ -442,6 +522,13 @@ vxClient.prototype.holdHybrid = function(hybrid){
 
 //OBJECT="studio.line"--\/--\/--\/--\/--\/--\/--\/--\/--\/--\/--\/--\/--\/--START
 vxClient.prototype.getLine = function(lineNumber, cb){
+	if(typeof cb !== 'function') return this.consoleLog(1, "Callback is required for \"getLine\"");
+	if(typeof lineNumber == 'undefined') return this.consoleLog(1, "LineId is required for \"getLine\" method");
+	if(!this.activeStudio()){
+		this.consoleLog(1, "Must select studio before using this method");
+		cb("Must select studio before using this method", null);
+		return;
+	}
 	this.request({
 		object: "studio",
 		subObject: "line",
@@ -465,6 +552,12 @@ vxClient.prototype.getLine = function(lineNumber, cb){
 }
 
 vxClient.prototype.setLineComment = function(lineNumber, comment){
+	if(typeof lineNumber == 'undefined') return this.consoleLog(1, "LineId is required for \"getLine\" method");
+	if(!this.activeStudio()){
+		this.consoleLog(1, "Must select studio before using this method");
+		return;
+	}
+	if(this.checkLineState(lineNumber, true, 'IDLE')) return this.consoleLog(1, "Cannot set line comment when the lineState is IDLE");
 	this.request({
 		operation: 'set',
 		object: 'studio',
@@ -479,6 +572,11 @@ vxClient.prototype.setLineComment = function(lineNumber, comment){
 }
 
 vxClient.prototype.seizeLine = function(lineNumber){
+	if(typeof lineNumber == 'undefined') return this.consoleLog(1, "LineId is required for \"getLine\" method");
+	if(!this.activeStudio()){
+		this.consoleLog(1, "Must select studio before using this method");
+		return;
+	}
 	this.request({
 		operation: "seize",
 		object: "studio",
@@ -490,8 +588,12 @@ vxClient.prototype.seizeLine = function(lineNumber){
 }
 
 vxClient.prototype.callLine = function(options){
+	if(!this.activeStudio()){
+		this.consoleLog(1, "Must select studio before using this method");
+		return;
+	}
 	if(typeof options == 'undefined' || typeof options.lineId == 'undefined' || typeof options.number == 'undefined'){
-		if(this.debug) console.log("Error: missing a required option for the \"callLine\" method");
+		this.consoleLog(1, "Error: missing a required option for the \"callLine\" method");
 		return;
 	}else{
 		if(typeof options.handset !== 'undefined'){
@@ -519,8 +621,12 @@ vxClient.prototype.callLine = function(options){
 }
 
 vxClient.prototype.takeLine = function(options){
+	if(!this.activeStudio()){
+		this.consoleLog(1, "Must select studio before using this method");
+		return;
+	}
 	if(typeof options.lineId == 'undefined'){
-		if(this.debug) console.log("Error: missing required lineId option for \"takeLine\" method");
+		this.consoleLog(1, "Error: missing required lineId option for \"takeLine\" method");
 		return;
 	}
 	if(!options || typeof options.handset == 'undefined') var handset = null;
@@ -548,6 +654,10 @@ vxClient.prototype.takeLine = function(options){
 }
 
 vxClient.prototype.takeNext = function(){
+	if(!this.activeStudio()){
+		this.consoleLog(1, "Must select studio before using this method");
+		return;
+	}
 	this.request({
 		operation: 'take',
 		object: 'studio',
@@ -560,6 +670,11 @@ vxClient.prototype.takeNext = function(){
 }
 
 vxClient.prototype.dropLine = function(lineNumber){
+	if(!this.activeStudio()){
+		this.consoleLog(1, "Must select studio before using this method");
+		return;
+	}
+	if(typeof lineNumber == 'undefined') return this.consoleLog(1, "LineId is required for \"dropLine\" method");
 	this.request({
 		operation: "drop",
 		object: "studio",
@@ -572,6 +687,12 @@ vxClient.prototype.dropLine = function(lineNumber){
 }
 
 vxClient.prototype.lockLine = function(lineNumber){
+	if(!this.activeStudio()){
+		this.consoleLog(1, "Must select studio before using this method");
+		return;
+	}
+	if(typeof lineNumber == 'undefined') return this.consoleLog(1, "LineId is required for \"lockLine\" method");
+	if(!this.checkLineState(lineNumber, true, 'ON_AIR')) return this.consoleLog(1, "Lock line method requires a line state of ON_AIR");
 	this.request({
 		operation: "lock",
 		object: "studio",
@@ -583,6 +704,12 @@ vxClient.prototype.lockLine = function(lineNumber){
 }
 
 vxClient.prototype.unlockLine = function(lineNumber){
+	if(!this.activeStudio()){
+		this.consoleLog(1, "Must select studio before using this method");
+		return;
+	}
+	if(typeof lineNumber == 'undefined') return this.consoleLog(1, "LineId is required for \"unlockLine\" method");
+	if(!this.checkLineState(lineNumber, true, 'ON_AIR')) return this.consoleLog(1, "Unlock line method requires a line state of ON_AIR_LOCKED");
 	this.request({
 		operation: "unlock",
 		object: "studio",
@@ -594,6 +721,12 @@ vxClient.prototype.unlockLine = function(lineNumber){
 }
 
 vxClient.prototype.holdLine = function(lineNumber, ready){
+	if(!this.activeStudio()){
+		this.consoleLog(1, "Must select studio before using this method");
+		return;
+	}
+	if(typeof lineNumber == 'undefined') return this.consoleLog(1, "LineId is required for \"holdLine\" method");
+	if(typeof ready !== 'boolean') ready = true;
 	this.request({
 		operation: "hold",
 		object: "studio",
@@ -612,6 +745,11 @@ vxClient.prototype.holdLine = function(lineNumber, ready){
 }
 
 vxClient.prototype.raiseLine = function(lineNumber){
+	if(!this.activeStudio()){
+		this.consoleLog(1, "Must select studio before using this method");
+		return;
+	}
+	if(typeof lineNumber == 'undefined') return this.consoleLog(1, "LineId is required for \"raiseLine\" method");
 	this.request({
 		operation: "raise",
 		object: "studio",
@@ -625,6 +763,12 @@ vxClient.prototype.raiseLine = function(lineNumber){
 
 //OBJECT="studio.book"--\/--\/--\/--\/--\/--\/--\/--\/--\/--\/--\/--\/--\/--START
 vxClient.prototype.recordCount = function(cb){
+	if(typeof cb !== 'function') return this.consoleLog(1, "Callback is required for \"recordCount\"");
+	if(!this.activeStudio()){
+		this.consoleLog(1, "Must select studio before using this method");
+		cb("Must select studio before using this method", null);
+		return;
+	}
 	this.request({
 		object: "studio",
 		subObject: "book",
@@ -639,6 +783,12 @@ vxClient.prototype.recordCount = function(cb){
 }
 
 vxClient.prototype.recordList = function(range,cb){
+	if(typeof cb !== 'function') return this.consoleLog(1, "Callback is required for \"recordList\"");
+	if(!this.activeStudio()){
+		this.consoleLog(1, "Must select studio before using this method");
+		cb("Must select studio before using this method", null);
+		return;
+	}
 	this.request({
 		object: "studio",
 		subObject: "book",
@@ -657,7 +807,12 @@ vxClient.prototype.recordList = function(range,cb){
 }
 
 vxClient.prototype.addRecord = function(options){
-	if(!options.type) options.type = null;
+	if(!this.activeStudio()){
+		this.consoleLog(1, "Must select studio before using this method");
+		return;
+	}
+	var types = ['GLOBAL', 'STUDIO', 'SHOW'];
+	if(typeof options.type !== 'string' || types.indexOf(options.type.toUpperCase()) == -1) options.type = null;
 	else options.type = options.type.toUpperCase();
 	if(!options.name) options.name = null;
 	if(!options.number) options.number = null;
@@ -676,6 +831,11 @@ vxClient.prototype.addRecord = function(options){
 }
 
 vxClient.prototype.updateRecord = function(recordNumber, options){
+	if(!this.activeStudio()){
+		this.consoleLog(1, "Must select studio before using this method");
+		return;
+	}
+	if(typeof recordNumber == 'undefined') return this.consoleLog(1, "Missing recordNumber for \"updateRecord\" method");
 	if(!options.type) options.type = null;
 	else options.type = options.type.toUpperCase();
 	if(!options.name) options.name = null;
@@ -696,6 +856,11 @@ vxClient.prototype.updateRecord = function(recordNumber, options){
 }
 
 vxClient.prototype.deleteRecord = function(recordNumber){
+	if(!this.activeStudio()){
+		this.consoleLog(1, "Must select studio before using this method");
+		return;
+	}
+	if(typeof recordNumber == 'undefined') return this.consoleLog(1, "Missing recordNumber for \"deleteRecord\" method");
 	this.request({
 		operation: "del",
 		object: "studio",
@@ -709,6 +874,12 @@ vxClient.prototype.deleteRecord = function(recordNumber){
 
 //OBJECT="studio.log"--\/--\/--\/--\/--\/--\/--\/--\/--\/--\/--\/--\/--\/--START
 vxClient.prototype.logCount = function(cb){
+	if(typeof cb !== 'function') return this.consoleLog(1, "Callback is required for \"logCount\"");
+	if(!this.activeStudio()){
+		this.consoleLog(1, "Must select studio before using this method");
+		cb("Must select studio before using this method", null);
+		return;
+	}
 	this.request({
 		object: "studio",
 		subObject: "log",
@@ -723,6 +894,12 @@ vxClient.prototype.logCount = function(cb){
 }
 
 vxClient.prototype.logList = function(range, cb){
+	if(typeof cb !== 'function') return this.consoleLog(1, "Callback is required for \"logList\"");
+	if(!this.activeStudio()){
+		this.consoleLog(1, "Must select studio before using this method");
+		cb("Must select studio before using this method", null);
+		return;
+	}
 	this.request({
 		object: "studio",
 		subObject: "log",

@@ -1,3 +1,6 @@
+[![Version](https://img.shields.io/npm/v/vx-client.svg)](https://www.npmjs.com/package/vx-client)
+[![Downloads](https://img.shields.io/npm/dm/vx-client.svg)](https://www.npmjs.com/package/vx-client)
+
 #VX-CLIENT
 
 ##Description
@@ -27,7 +30,7 @@ var vx = new vxClient();
 * 1: Error Logging - All errors will be logged to the console
 * 2: I/O Logging - All incoming and outgoing data strings to/from the server will be logged
 
-***NOTE: Higher number debug levels include features of all lower levels of debugging excluding level 0***
+***NOTE: Higher number debug levels include features of all lower levels(excluding level 0) of debugging***
 
 ##Enumerations
 * In this documentation the properties in the table below will have the following possible return values
@@ -197,7 +200,7 @@ vx.login({sessionId: "sOm3_s3ss1one_Id"}, function(err, loggedIn){
 ```
 
 ##VX Methods
-***NOTE: these methods are available after a server connection has been and after the user has logged in the system (with two exceptions to the login policy).
+***NOTE: these methods are available after a server connection has been made and after the user has logged into the system (with the two exceptions being the "getServer" method and the "ping" method).
 
 ***
 ***
@@ -208,6 +211,7 @@ vx.login({sessionId: "sOm3_s3ss1one_Id"}, function(err, loggedIn){
 
 ####'studioList'
 * **Read-only** list of available studios
+* **Requires selected studio**
 
 ```Javascript
 vx.studioList(function(err, data){
@@ -300,6 +304,7 @@ vx.ping(function(){
 
 ####'getStudio'
 * **Read-only** method to retrieve details about currently selected studio
+* **Requires selected studio**
 
 ```Javascript
 vx.getStudio(function(err, data){
@@ -328,6 +333,7 @@ vx.getStudio(function(err, data){
 
 ####'showList'
 * **Read-only** method to retrieve list of available shows
+* **Requires selected studio**
 
 ```Javascript
 vx.showList(function(err, data){
@@ -351,6 +357,7 @@ vx.showList(function(err, data){
 
 ####'lineList'
 * **Read-only** method to retrieve list of available studio lines
+* **Requires selected studio**
 
 ```Javascript
 vx.lineList(function(err, data){
@@ -396,6 +403,7 @@ vx.selectStudio(studioId);
 ####'selectShow'
 * **Write-only** method to select a new show to operate in.
 * Unlike 'selectStudio' this method is not a dependency, and the show will default to the first available when selecting a studio.
+* **Requires selected studio**
 * Accepts **one argument**: show_id
 * Triggers the **"studioUpdate"** event
 
@@ -405,6 +413,7 @@ vx.selectShow(showId);
 
 ####'im'
 * **Write-Only** method that sends an **instant message** within the selected studio
+* **Requires selected studio**
 * Accepts **two arguments**: from, message
 * Listen for incoming instant messages with the **"message"** event
 
@@ -415,6 +424,7 @@ vx.im('John Smith', 'Please put line 2 on air.');
 ####'setBusyAll'
 * **Write-only** method that will change every line (that has been confirgured to be able to go busy) to a busy state.
 * The "lineState" value will become "BUSY" for each line it has changed
+* **Requires selected studio**
 * Accepts **one optional argument**: boolean busyState (Defaults to true)
 * Triggers the **"studioUpdate"** event and the **"lineUpdate"** event.
 
@@ -428,6 +438,7 @@ vx.setBusyAll();  //Also true
 
 ####'dropHybrid'
 * **Write-only** method to drop the calls that reside on a hybrid line
+* **Requires selected studio**
 * Accepts **one argument**: hybrid_id/number
 * Triggers the **"lineUpdate"** event
 
@@ -437,6 +448,7 @@ vx.dropHybrid(hybridId);
 
 ####'holdHybrid'
 * **Write-only** method to pull a call that resides on a certain hybrid on hold
+* **Requires selected studio**
 * Accepts **one argument**: hybrid_id/number
 * Triggers the **"lineUpdate"** event
 
@@ -453,6 +465,7 @@ vx.holdHybrid(hybridId);
 
 ####'getLine'
 * **Read-only** method that retries all properties related to a specified line
+* **Requires selected studio**
 * Accepts **one argument**: line_id/number
 * **NOTE: Should use the "lineUpdate" event to get live feedback on line changes.**
 
@@ -482,6 +495,8 @@ vx.getLine(lineId, function(err, data){
 
 ####'setLineComment'
 * **Write-only** method that sets the comment attribute for a specified line
+* **Requires selected studio**
+* **Will result in an error if the callState of the chosen line is "IDLE"**
 * Accepts **two arguments**: lineId, comment_string
 * Triggers the **"lineUpdate"** event
 
@@ -491,6 +506,7 @@ vx.setLineComment(lineId, 'This is a comment');
 
 ####'seizeLine'
 * **Write-only** method that reserves a line for the client so no one else can call from it.
+* **Requires selected studio**
 * Accepts **one argument**: lineId
 * Triggers the **"lineUpdate"** event
 
@@ -499,7 +515,8 @@ vx.seizeLine(lineId);
 ```
 
 ####'callLine'
-* **Write-only** method that creates a call to a specified number and puts it either on a hybrid or a specific handset.
+* **Write-only** method that creates a call to a specified number and puts it either on a hybrid or a specific 
+* **Requires selected studio**handset.
 * Accepts **four options**: lineId(required), number(String-required), handset(Boolean-optional), optNumber(Integer-optional)
 * If handset is set to true than the number will be placed on the hybrid line passed in through the "optNumber" option.
 * If handset is set to false than the number will be placed on a handset with the port passed in through the "optNumber" option
@@ -511,6 +528,7 @@ vx.callLine({number: "123", handset: true, optNumber=1});
 
 ####'takeLine'
 * **Write-only** method to take a call on air to a certain hybrid or a handset
+* **Requires selected studio**
 * Accepts **three options**: lineId(required), handset(Boolean-optional), hybrid(Integer-required if handset is true)
 * Triggers the **"lineUpdate"** event and the **"studioUpdate"** event
 
@@ -520,6 +538,7 @@ vx.takeLine({lineId: 1, handset: true, hybrid: 1});
 
 ####'takeNextLine'
 * **Write-only** method that takes the next line defined by "next" or "producerNext" depending on mode of operation (TALENT or PRODUCER)
+* **Requires selected studio**
 * Triggers the **"lineUpdate"** event and the **"studioUpdate"** event
 
 ```Javascript
@@ -528,6 +547,7 @@ vx.takeNextLine();
 
 ####'dropLine'
 * **Write-only** method that drops a specified line
+* **Requires selected studio**
 * Accepts **one argument**: lineId
 * Triggers the **"lineUpdate"** event
 
@@ -537,7 +557,8 @@ vx.dropLine(lineId);
 
 ####'lockLine'
 * **Write-only** method that locks the call on a specific line.
-* **NOTE: this method will only work if the line is in the "ON\_AIR" lineState**
+* **This method will error if the line is NOT in the "ON\_AIR" lineState**
+* **Requires selected studio**
 * Accepts **one argument**: lineId
 * Triggers the **"lineUpdate"** event
 
@@ -547,7 +568,8 @@ vx.lockLine(lineId);
 
 ####'unlockLine'
 * **Write-only** method that unlocks the call on a specific line.
-* **NOTE: this method will only work if the line is in the "ON\_AIR\_LOCKED" lineState**
+* **This method will error if the line is NOT in the "ON\_AIR\_LOCKED" lineState**
+* **Requires selected studio**
 * Accepts **one argument**: lineId
 * Triggers the **"lineUpdate"** event
 
@@ -557,6 +579,7 @@ vx.unlockLine(lineId);
 
 ####'holdLine'
 * **Write-only** method that places on line on hold and merges the caller with a configured in studio on hold channel hybrid.
+* **Requires selected studio**
 * Accepts **two arguments**: lineId, ready(Boolean)
 * The ready argument toggles between setting a lineState of "ON_HOLD" AND "ON\_HOLD\_READY" with ready set to false or true respectively.
 * Triggers the **"lineUpdate"** event and the **"studioUpdate"** event
@@ -567,6 +590,7 @@ vx.holdLine(lineId, true);
 
 ####'raiseLine'
 * **Write-only** method that raises the priority of a specified line in the next/pnext queue
+* **Requires selected studio**
 * Accepts **one argument**: lineId
 * Triggers the **"studioUpdate"** event
 
@@ -583,6 +607,7 @@ vx.raiseLine(lineId);
 
 ####'recordCount'
 * **Read-only** method that retrieves the number of records in the address book
+* **Requires selected studio**
 
 ```Javascript
 vx.recordCount(function(err, data){
@@ -598,6 +623,7 @@ vx.recordCount(function(err, data){
 
 ####'recordList'
 * **Read-only** method that retrieves a list of all records in the address book
+* **Requires selected studio**
 * Accepts **two arguments**: range(Array - Nullable), callback
 * The range argument array has two elements: First is the starting index, second is the number of records to retrieve.
 
@@ -628,6 +654,7 @@ vx.recordList([1, 3], function(err, data){
 
 ####'addRecord'
 * **Write-only** method to add a record to the address book
+* **Requires selected studio**
 * Accepts **three options**: type(String-required), name(String-required), number(String-required)
 * The type option defines scope and can be either **"GLOBAL"**, **"STUDIO"**, or **"SHOW"**
 * Triggers the **"bookUpdate"** event
@@ -638,6 +665,7 @@ vx.addRecord({type: "GLOBAL", name: "Phone 1", number: "1@192.168.0.24"});
 
 ####'updateRecord'
 * **Write-only** method to update a record in the address book
+* **Requires selected studio**
 * Accepts **two arguments**: recordId, update options(same as previous method except each option is optional)
 * Triggers the **"bookUpdate"** event
 
@@ -647,6 +675,7 @@ vx.updateRecord(recordId, {type: "STUDIO"});
 
 ####'deleteRecord'
 * **Write-only** method to delete a specified record
+* **Requires selected studio**
 * Accepts **one argument**: recordId
 * Triggers the **"bookUpdate"** event
 
@@ -663,6 +692,7 @@ vx.deleteRecord(recordId);
 
 ####'logCount'
 * **Read-only** method to retrieve history count of all calls made in the current studio.
+* **Requires selected studio**
 
 ```Javascript
 vx.logCount(function(err, data){
@@ -678,6 +708,7 @@ vx.logCount(function(err, data){
 
 ####'logList'
 * **Read-only** method that retrieves a list of all calls in the studio log
+* **Requires selected studio**
 * Accepts **two arguments**: range(Array - Nullable), callback
 * The range argument array has two elements: First is the starting index, second is the number of records to retrieve.
 
