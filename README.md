@@ -139,7 +139,7 @@ vx.on('event_name', function(error, data){
 		lineState: 'ON_AIR',
 		callState: 'ESTABLISHED',
 		lineName: 'Main Studio',
-		lineLocal: '10,
+		lineLocal: '10',
 		lineRemote: '28',
 		lineHybrid: 5,
 		lineTime: 123,
@@ -409,7 +409,7 @@ vx.selectShow(showId);
 * Listen for incoming instant messages with the **"message"** event
 
 ```Javascript
-vx.im('John Smith', 'Please put line 2 on air.");
+vx.im('John Smith', 'Please put line 2 on air.');
 ```
 
 ####'setBusyAll'
