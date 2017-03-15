@@ -1,6 +1,6 @@
 {
   "name": "vx-client",
-  "version": "0.0.5",
+  "version": "0.0.6",
   "description": "Nodejs api wrapper for Telos VX SIP server communication",
   "main": "index.js",
   "scripts": {
