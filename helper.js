@@ -240,7 +240,7 @@ exports.expects = {
 		"mute": {name: "muted"},
 		"show_locked": {name: "showLocked"},
 		"auto_answer": {name: "autoAnswerOn"},
-		"line_list": {name: "lineList", each: ["state","callState","name","local","remote","hybrid","time","comment","direction"]},
+		"line_list": {name: "lineList", each: ["lineState","callState","lineName","lineLocal","lineRemote","lineHybrid","lineTime","lineComment","lineDirection"]},
 		"from":{},
 		"message":{}
 	},
