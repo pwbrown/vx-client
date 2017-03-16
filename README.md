@@ -543,7 +543,7 @@ vx.setLineComment(lineId, 'This is a comment');
 * **NOTE: Unknown/Unspecified comment length limit as of current version. Use "very" long comment strings at your own discretion.**
 
 ```Javascript
-vx.setCallerId(lineId, 'John Smith'');
+vx.setCallerId(lineId, 'John Smith');
 ```
 
 ####'seizeLine'
