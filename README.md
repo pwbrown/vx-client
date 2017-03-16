@@ -10,14 +10,17 @@ vx-client is a node.js api wrapper for the Telos VX phone system SIP server. Sen
 * Tested on Telos VX Prime system
 
 ##Changelog - Alpha Version
-Current Version: Alpha 0.0.7
+Current Version: Alpha 0.0.8
 
-####Changes since version Alpha 0.0.6:
+####Changes in version Alpha 0.0.7:
 * ***LWCP parsing bug fix***: Updated regular expression to better handle property enumerations.
 * ***Updated "getLine" method***: Now returns "callerId" line property as well
 * ***Added method "setCallerId"***: New method to set the caller id property on a specified line
 * ***Added method "getCallerId"***: New method to retrieve caller id property of a specified line
 * ***Updated "logList" method***: Also returns "lineCallerId" property for each line and renames all properties to match the standard line property naming convention throughout this documentation
+
+####Changes in verion Alpha 0.0.8:
+* ***LWCP parsing bug fix***: Fixing regular expression bug
 
 ##IMPORTANT NOTES
 * The CallerId feature is a newer feature for the vx system. This means that the "lineCallerId" line property will **NEVER** be included in the "lineList" property array of the "studioUpdate" event or the "lineList" method. The "lineCallerId" property **WILL** be included (if the server can handle it) in "lineUpdate" events and is easily accessible via the "getLine" and "getCallerId" methods.  **THIS MEANS THAT** in situations where a "studioUpdate" event is being used to establish line states after initial server connection, an additional call to "getCallerId" for each line must also be made to retrieve these.
@@ -534,7 +537,7 @@ vx.getCallerId(lineId, function(err, data){
 vx.setLineComment(lineId, 'This is a comment');
 ```
 
-####'setLineComment'
+####'setCallerId'
 * **Write-only** method that sets the callerId attribute for a specified line
 * **Requires selected studio**
 * **Will result in an error if the callState of the chosen line is "IDLE"**

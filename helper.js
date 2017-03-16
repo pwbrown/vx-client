@@ -77,7 +77,12 @@ function propertyParse(props){
 						var unparsedArray = props.slice(0,closeIndex+1);
 						props = props.substring(closeIndex+1);
 						unparsedArray = ((unparsedArray.replace(/TRUE/g,'true')).replace(/FALSE/g,'false')).replace(/NULL/g,'null');
-						unparsedArray = unparsedArray.replace(/(\[\s*|\,\s*)([A-Z]+(?:\_[A-Z]+)*)(\s*\]|\s*\,)/g,"$1\"$2\"$3");
+						var temp = unparsedArray;
+						unparsedArray = unparsedArray.replace(/(\[\s*|\,\s*)([A-Z]+(?:\_[A-Z]+)*)(\s*\]|\s*\,)/,"$1\"$2\"$3");
+						while(unparsedArray !== temp){
+							temp = unparsedArray;
+							unparsedArray = unparsedArray.replace(/(\[\s*|\,\s*)([A-Z]+(?:\_[A-Z]+)*)(\s*\]|\s*\,)/,"$1\"$2\"$3");
+						}
 						try{
 							var parsedArray = JSON.parse(unparsedArray);
 							properties.push({property: property, value: parsedArray});
