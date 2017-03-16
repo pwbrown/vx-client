@@ -77,7 +77,7 @@ function propertyParse(props){
 						var unparsedArray = props.slice(0,closeIndex+1);
 						props = props.substring(closeIndex+1);
 						unparsedArray = ((unparsedArray.replace(/TRUE/g,'true')).replace(/FALSE/g,'false')).replace(/NULL/g,'null');
-						unparsedArray = unparsedArray.replace(/([^A-Za-z"])([A-Z]+)([^a-zA-Z"])/g,"$1\"$2\"$3");
+						unparsedArray = unparsedArray.replace(/(\[\s*|\,\s*)([A-Z]+(?:\_[A-Z]+)*)(\s*\]|\s*\,)/g,"$1\"$2\"$3");
 						try{
 							var parsedArray = JSON.parse(unparsedArray);
 							properties.push({property: property, value: parsedArray});
@@ -256,7 +256,8 @@ exports.expects = {
 		'direction': {name: "lineDirection"},
 		'ssid': {name: "lineSSID"},
 		'cause': {name: "lineCause"}, 
-		'rport': {name: "lineRPORT"}
+		'rport': {name: "lineRPORT"},
+		'caller_id': {name: "lineCallerId"}
 	},
 	studioBook:{
 		'type': {name: "eventType"},

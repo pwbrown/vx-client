@@ -9,6 +9,20 @@ vx-client is a node.js api wrapper for the Telos VX phone system SIP server. Sen
 ###*Notes on environment*
 * Tested on Telos VX Prime system
 
+##Changelog - Alpha Version
+Current Version: Alpha 0.0.7
+
+####Changes since version Alpha 0.0.6:
+* ***LWCP parsing bug fix***: Updated regular expression to better handle property enumerations.
+* ***Updated "getLine" method***: Now returns "callerId" line property as well
+* ***Added method "setCallerId"***: New method to set the caller id property on a specified line
+* ***Added method "getCallerId"***: New method to retrieve caller id property of a specified line
+* ***Updated "logList" method***: Also returns "lineCallerId" property for each line and renames all properties to match the standard line property naming convention throughout this documentation
+
+##IMPORTANT NOTES
+* The CallerId feature is a newer feature for the vx system. This means that the "lineCallerId" line property will **NEVER** be included in the "lineList" property array of the "studioUpdate" event or the "lineList" method. The "lineCallerId" property **WILL** be included (if the server can handle it) in "lineUpdate" events and is easily accessible via the "getLine" and "getCallerId" methods.  **THIS MEANS THAT** in situations where a "studioUpdate" event is being used to establish line states after initial server connection, an additional call to "getCallerId" for each line must also be made to retrieve these.
+
+
 ##Installation
 	npm install vx-client --save
 	--OR--
@@ -481,10 +495,27 @@ vx.getLine(lineId, function(err, data){
 		lineHybrid:"0",
 		lineTime:123,
 		lineComment:"",
-		lineDirection:"NONE"
+		lineDirection:"NONE",
+		lineCallerId: 
 	}
 	*/
 
+})
+```
+
+####'getCallerId'
+* **Read-only** method that retrieves the callerId property for a specified line
+* **Requires selected studio**
+* Accepts **one argument**: lineId
+
+```Javascript
+vx.getCallerId(lineId, function(err, data){
+	
+	/* data Definition
+	data: {
+		lineCallerId: "John Smith" 
+	}
+	*/
 })
 ```
 
@@ -501,6 +532,18 @@ vx.getLine(lineId, function(err, data){
 
 ```Javascript
 vx.setLineComment(lineId, 'This is a comment');
+```
+
+####'setLineComment'
+* **Write-only** method that sets the callerId attribute for a specified line
+* **Requires selected studio**
+* **Will result in an error if the callState of the chosen line is "IDLE"**
+* Accepts **two arguments**: lineId, callerId_string
+* Triggers the **"lineUpdate"** event
+* **NOTE: Unknown/Unspecified comment length limit as of current version. Use "very" long comment strings at your own discretion.**
+
+```Javascript
+vx.setCallerId(lineId, 'John Smith'');
 ```
 
 ####'seizeLine'
@@ -718,11 +761,12 @@ vx.logList([1, 100], function(err, data){
 	data: {
 		logList: [
 			{
-				startTime: 1267557538,
-				duration: 0,
-				direction: 1,     //(1 - Incoming, 0 - Outgoing)
-				local: "40@192.168.0.9",
-				remote: "28@192.168.0.23"
+				lineStartTime: 1267557538,
+				lineDuration: 0,
+				lineDirection: 1,     //(1 - Incoming, 0 - Outgoing)
+				lineLocal: "40@192.168.0.9",
+				lineRemote: "28@192.168.0.23",
+				lineCallerId: "John Smith"
 			},
 			.
 			.

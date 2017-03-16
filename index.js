@@ -537,22 +537,43 @@ vxClient.prototype.getLine = function(lineNumber, cb){
 		object: "studio",
 		subObject: "line",
 		subObjectId: lineNumber,
-		properties: ["state", "callstate", "name", "local", "remote", "hybrid", "time", "comment", "direction"],
+		properties: ["state", "callstate", "name", "local", "remote", "hybrid", "time", "comment", "direction", "caller_id"],
 		expects: {
-			state: {name: "lineState"},
-			callstate: {name: "callState"},
-			name: {name: "lineName"},
-			local: {name: "lineLocal"},
-			remote: {name: "lineRemote"},
-			hybrid: {name: "lineHybrid"},
-			time: {name: "lineTime"},
-			comment: {name: "lineComment"},
-			direction: {name: "lineDirection"}
+			"state": {name: "lineState"},
+			"callstate": {name: "callState"},
+			"name": {name: "lineName"},
+			"local": {name: "lineLocal"},
+			"remote": {name: "lineRemote"},
+			"hybrid": {name: "lineHybrid"},
+			"time": {name: "lineTime"},
+			"comment": {name: "lineComment"},
+			"direction": {name: "lineDirection"},
+			"caller_id": {name: "lineCallerId"}
 		},
 		cb:cb
 	})
-	//out - get studio.line#1 state, callstate, name, local, remote, hybrid, time, comment, direction 
-	//in  - indi studio.line#1 state=ON_AIR, callstate=ESTABLISHED, name="Main-Studio", local="10", remote="28", hybrid=5, time=123, comment="This is a comment.", direction=OUTGOING
+	//out - get studio.line#1 state, callstate, name, local, remote, hybrid, time, comment, direction, caller_id
+	//in  - indi studio.line#1 state=ON_AIR, callstate=ESTABLISHED, name="Main-Studio", local="10", remote="28", hybrid=5, time=123, comment="This is a comment.", direction=OUTGOING, caller_id=NULL
+}
+
+vxClient.prototype.getCallerId = function(lineNumber, cb){
+	if(typeof cb !== 'function') return this.consoleLog(1, "Callback is required for \"getCallerId\"");
+	if(typeof lineNumber == 'undefined') return this.consoleLog(1, "LineId is required for \"getCallerId\" method");
+	if(!this.activeStudio()){
+		this.consoleLog(1, "Must select studio before using this method");
+		cb("Must select studio before using this method", null);
+		return;
+	}
+	this.request({
+		object: 'studio',
+		subObject: 'line',
+		subObjectId: lineNumber,
+		properties:["caller_id"],
+		expects: {
+			"caller_id": {name: "lineCallerId"}
+		},
+		cb:cb
+	})
 }
 
 vxClient.prototype.setLineComment = function(lineNumber, comment){
@@ -573,6 +594,26 @@ vxClient.prototype.setLineComment = function(lineNumber, comment){
 	})
 	//out - set studio.line#1 comment = "This is a comment."
 	//in  - event studio.line#1 comment="This is a comment."
+}
+
+vxClient.prototype.setCallerId = function(lineNumber, callerId){
+	if(typeof lineNumber == 'undefined') return this.consoleLog(1, "LineId is required for \"getLine\" method");
+	if(!this.activeStudio()){
+		this.consoleLog(1, "Must select studio before using this method");
+		return;
+	}
+	if(this.checkLineState(lineNumber, true, 'IDLE')) return this.consoleLog(1, "Cannot set line caller id when the lineState is IDLE");
+	this.request({
+		operation: 'set',
+		object: 'studio',
+		subObject: 'line',
+		subObjectId: lineNumber,
+		properties: [
+			{property: "caller_id", value: callerId, type: 'string'}
+		]
+	})
+	//out - set studio.line#1 caller_id = "John Smith"
+	//in  - event studio.line#1 caller_id="John Smith"
 }
 
 vxClient.prototype.seizeLine = function(lineNumber){
@@ -913,7 +954,7 @@ vxClient.prototype.logList = function(range, cb){
 		],
 		expects: {
 			range: {},
-			list: {name: "logList", each:['startTime','duration','direction','local','remote']}
+			list: {name: "logList", each:['lineStartTime','lineDuration','lineDirection','lineLocal','lineRemote','lineCallerId']}
 		},
 		cb:cb
 	})
