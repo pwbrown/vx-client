@@ -10,7 +10,7 @@ vx-client is a node.js api wrapper for the Telos VX phone system SIP server. Sen
 * Tested on Telos VX Prime system
 
 ##Changelog - Alpha Version
-Current Version: Alpha 0.0.8
+Current Version: Alpha 0.0.9
 
 ####Changes in version Alpha 0.0.7:
 * ***LWCP parsing bug fix***: Updated regular expression to better handle property enumerations.
@@ -21,6 +21,9 @@ Current Version: Alpha 0.0.8
 
 ####Changes in verion Alpha 0.0.8:
 * ***LWCP parsing bug fix***: Fixing regular expression bug
+
+####Changes in version Alpha 0.0.9:
+* ***Server Disconnect***: Added function to disconnect from a Telos VX Server
 
 ##IMPORTANT NOTES
 * The CallerId feature is a newer feature for the vx system. This means that the "lineCallerId" line property will **NEVER** be included in the "lineList" property array of the "studioUpdate" event or the "lineList" method. The "lineCallerId" property **WILL** be included (if the server can handle it) in "lineUpdate" events and is easily accessible via the "getLine" and "getCallerId" methods.  **THIS MEANS THAT** in situations where a "studioUpdate" event is being used to establish line states after initial server connection, an additional call to "getCallerId" for each line must also be made to retrieve these.
@@ -194,6 +197,21 @@ vx.connect({host: "server_address", port: "server_port#"}, function(errorMessage
 		console.log("You are connected");
 	else 
 		console.log(errorMessage);
+})
+```
+####Disconnect from the server
+* If you have connected to a Telos system and need to change configurations or disable that connection, call this method.
+
+```Javascript
+vx.disconnect(function(err, disconnected){
+	if(err){
+		console.log(err);
+	}else if(disconnected){
+		console.log("Successfully disconnected");
+	}else{
+		console.log("Failed to disconnect from current Telos VX server connection");
+	}
+	
 })
 ```
 

@@ -47,6 +47,19 @@ vxClient.prototype.connect = function(options, cb){
 		cb("ERROR: connect method requires \"host\" and \"port\" options", false);
 	}
 }
+
+vxClient.prototype.disconnect = function(cb){
+	if(this.connected){
+		this.socket.destroy();
+		this.connected = false;
+		this.loggedIn = false;
+		this.state = {};
+		cb(null, true);
+	}else{
+		this.consoleLog(1, "ERROR: failed to destroy a non-existing socket connection");
+		cb("No connection exists to be destroyed", null);
+	}
+}
 //MAIN USER METHODS--/\--/\--/\--/\--/\--/\--/\--/\--/\--/\--/\--/\--/\--END
 
 //MAIN INTERNAL METHODS--\/--\/--\/--\/--\/--\/--\/--\/--\/--\/--\/--\/--\/--START
