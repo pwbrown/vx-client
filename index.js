@@ -98,23 +98,25 @@ vxClient.prototype.onData = function(data){
 	if(typeof multipleLines == 'object' && typeof multipleLines.length !== 'undefined' && multipleLines.length == 1){
 		data = multipleLines[0];
 		var lwcp = helper.lwcpParse(data);
-		var uniqKey = helper.uniqueKey(JSON.parse(JSON.stringify(lwcp)));
-		if(lwcp.operation == 'pong' && typeof this.cbRegister.pong !== 'undefined' && typeof this.cbRegister.pong.cb == 'function'){
-			this.cbRegister.pong.cb();
-		}else if(lwcp.operation == 'indi' && typeof this.cbRegister[uniqKey] !== 'undefined'){
-			var modifiedResults = helper.modifyResults(lwcp.properties || [], this.cbRegister[uniqKey].expects || {});
-			if(typeof this.cbRegister[uniqKey].cb == 'function'){
-				this.cbRegister[uniqKey].cb(null,modifiedResults);
+		if(lwcp !== null){
+			var uniqKey = helper.uniqueKey(JSON.parse(JSON.stringify(lwcp)));
+			if(lwcp.operation == 'pong' && typeof this.cbRegister.pong !== 'undefined' && typeof this.cbRegister.pong.cb == 'function'){
+				this.cbRegister.pong.cb();
+			}else if(lwcp.operation == 'indi' && typeof this.cbRegister[uniqKey] !== 'undefined'){
+				var modifiedResults = helper.modifyResults(lwcp.properties || [], this.cbRegister[uniqKey].expects || {});
+				if(typeof this.cbRegister[uniqKey].cb == 'function'){
+					this.cbRegister[uniqKey].cb(null,modifiedResults);
+				}
+			}else if(lwcp.operation == 'ack'){
+				var modifiedResults = helper.modifyResults(lwcp.properties || [], helper.expects.ack);
+				if(lwcp.object == 'cc' && typeof modifiedResults.loggedIn == 'boolean'){
+					this.loggedIn = modifiedResults.loggedIn;
+					if(typeof this.cbRegister.login !== 'undefined' && typeof this.cbRegister.login.cb == 'function')
+						this.cbRegister.login.cb(null, modifiedResults.loggedIn);
+				}
+			}else if(lwcp.operation == 'event' || lwcp.operation == 'update'){
+				this.handleEvent(lwcp);
 			}
-		}else if(lwcp.operation == 'ack'){
-			var modifiedResults = helper.modifyResults(lwcp.properties || [], helper.expects.ack);
-			if(lwcp.object == 'cc' && typeof modifiedResults.loggedIn == 'boolean'){
-				this.loggedIn = modifiedResults.loggedIn;
-				if(typeof this.cbRegister.login !== 'undefined' && typeof this.cbRegister.login.cb == 'function')
-					this.cbRegister.login.cb(null, modifiedResults.loggedIn);
-			}
-		}else if(lwcp.operation == 'event' || lwcp.operation == 'update'){
-			this.handleEvent(lwcp);
 		}
 	}else if(typeof multipleLines == 'object' && typeof multipleLines.length !== 'undefined' && multipleLines.length > 1){  //When the input stream is composed of multiple lines of data
 		for(var i = 0; i < multipleLines.length; i++){
