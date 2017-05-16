@@ -10,7 +10,7 @@ vx-client is a node.js api wrapper for the Telos VX phone system SIP server. Sen
 * Tested on Telos VX Prime system
 
 ##Changelog - Alpha Version
-Current Version: Alpha 0.0.10
+Current Version: Beta 0.1.0
 
 ####Changes in version Alpha 0.0.7:
 * ***LWCP parsing bug fix***: Updated regular expression to better handle property enumerations.
@@ -27,6 +27,9 @@ Current Version: Alpha 0.0.10
 
 ####Changes in version Alpha 0.0.10:
 * ***Bug Fix***: Fixing an issue where some TCP streams are interupted and not parsed correctly. Resolving to ignore those messages for the time being to prevent server crash.  May attempt to implement stream buffers to connect split messages.
+
+####Changes in version Beta 0.1.0:
+* ***Bug Fix***: Fixing regex issue that prevent some incoming communications to be ignored
 
 ##IMPORTANT NOTES
 * The CallerId feature is a newer feature for the vx system. This means that the "lineCallerId" line property will **NEVER** be included in the "lineList" property array of the "studioUpdate" event or the "lineList" method. The "lineCallerId" property **WILL** be included (if the server can handle it) in "lineUpdate" events and is easily accessible via the "getLine" and "getCallerId" methods.  **THIS MEANS THAT** in situations where a "studioUpdate" event is being used to establish line states after initial server connection, an additional call to "getCallerId" for each line must also be made to retrieve these.

@@ -16,7 +16,7 @@ exports.lwcpGenerate = function(options){
 }
 exports.lwcpParse = function(input){
 	input = input.replace(/(\n|\r)/g,'');
-	input = input.match(/^([a-z]+)\s\s*([a-z]+)(?:\.([a-z]+)(?:\#([0-9]+))?)?\s\s*(.*)$/);
+	input = input.match(/^([a-z]+)\s\s*([a-z]+)(?:\.([a-z]+)(?:\#([0-9]+))?)?(?:\s\s*(.*))?$/);
 	if(input !== null){
 		input = {
 			operation: input[1] || null,
