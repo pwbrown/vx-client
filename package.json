@@ -15,5 +15,10 @@
   },
   "homepage": "https://github.com/pwbrown/vx-client#readme",
   "author": "Philip Brown",
-  "license": "GNU GPL"
+  "license": "GNU GPL",
+  "dependencies": {
+    "cli-color": "^1.2.0",
+    "lwcp": "^1.0.1",
+    "type-check": "^0.3.2"
+  }
 }
